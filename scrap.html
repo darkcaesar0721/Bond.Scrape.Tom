@@ -1,0 +1,139 @@
+<html>
+	<head>
+		<script src="https://code.jquery.com/jquery-3.6.3.min.js"></script>
+	</head>
+	<body>
+		<script>
+			var powerList = "";
+			var count = 0;
+
+
+			var inputNames = {
+				businessName: "ctl00$ContentPlaceHolderMainContent$businessInfo$businessName",
+				dba: "ctl00$ContentPlaceHolderMainContent$businessInfo$dba",
+				address: "ctl00$ContentPlaceHolderMainContent$businessInfo$address",
+				entity: "ctl00$ContentPlaceHolderMainContent$businessInfo$entity",
+				city: "ctl00$ContentPlaceHolderMainContent$businessInfo$city",
+				state: "ctl00$ContentPlaceHolderMainContent$businessInfo$state",
+				zip: "ctl00$ContentPlaceHolderMainContent$businessInfo$zip",
+				phoneNo: "ctl00$ContentPlaceHolderMainContent$businessInfo$phoneNo"
+			}
+			var errMsg = "ctl00_ContentPlaceHolderMainContent_lblLicenseNoOrAppFeeNumberNotFoundMessage";
+			var indemnitorId = "ctl00_ContentPlaceHolderMainContent_indemnitorInfo_radioButtonListChooseIndemnitor";
+			var jobClass = "span_radioButtonListChooseIndemnitor_Titles";
+			var table = "ctl00_ContentPlaceHolderMainContent_classificationInfo_dataListClassification";
+
+			var keys = Object.keys(inputNames);
+			var errors = [];
+			function getSingle(license, s, callback){
+				$.ajax({
+					url: "https://www.bondapp.com/services/v3/BondApplication/Default.aspx?id=2&m=0&license=" + license,
+					method: "get",
+					success: function(res) {
+						if ($(res).find('#' + errMsg).get().length === 0) {
+							var names = $(res).find('#' + indemnitorId + ' input').get();
+							var jobs = $(res).find('.' + jobClass).get();
+
+							var single = license + ',';
+							keys.forEach(function(k){
+								var name = inputNames[k];
+								var val = $($(res).find(".table_webUserControl [name=" + name + "]").get()[0]).val();
+								if (k === 'entity') {
+									single += $($(res).find(".table_webUserControl [name=" + name + "]" + " option[value=" + val + "]").get()[0]).html() + ',';
+								} else {
+									single += val + ',';
+								}
+							});
+
+							var classfications = $(res).find('#' + table + ' div span').get();
+							single += '"';
+							for (var j = 0; j < classfications.length; j = j + 2) {
+								if (j == classfications.length - 2)
+									single += $(classfications[j]).html() + ' ' + $(classfications[j + 1]).html();
+								else
+									single += $(classfications[j]).html() + ' ' + $(classfications[j + 1]).html() + '\n';
+							}
+							single += '",';
+
+							if (names.length < 2) {
+								powerList += single + ',,,,,,,\n';
+							} else {
+								for (var i = 0; i < names.length - 1; i++) {
+									var _single = single;
+
+									var name = $(names[i]).val();
+									var _names = name.split(':');
+									for (var j = 0; j < 3; j++) {
+										if (_names[j]) {
+											_single += _names[j] + ',';
+										} else {
+											_single += ',';
+										}
+									}
+
+									var job = $(jobs[i]).html();
+									job = job.replace("(", "");
+									job = job.replace(")", "");
+									_single += job;
+
+									_single += ',,,,,\n';
+									powerList += _single;
+								}
+							}
+						}
+
+						count--;
+						if (count === 0 && errors.length > 0) {
+							var _errors = errors;
+							errors = [];
+
+							count = _errors.length;
+							_errors.forEach(license => {
+								getSingle(license, s, callback);
+							});
+						} else if (count === 0 && errors.length === 0) {
+							if (callback === 'none') {
+								alert('die');
+							} else {
+								callback(s);
+							}
+						}
+					},
+					error: function(err) {
+						errors.push(license);
+						count--;
+
+						if (count === 0 && errors.length > 0) {
+							var _errors = errors;
+							errors = [];
+
+							count = _errors.length;
+							_errors.forEach(license => {
+								getSingle(license, s, callback);
+							});
+						}
+					}
+				});
+			}
+
+			function getRange(s) {
+				if (s + 1000 >= end) {
+					count = end - s + 1;
+					for (var i = s; i <= end; i++) {
+						getSingle(i, s + 1000, 'none');
+					}
+				} else {
+					count = 1000;
+					for (var i = s; i < (s + 1000); i++) {
+						getSingle(i, s + 1000, getRange);
+					}
+				}
+			}
+
+			var start = 1000000;
+			var end = 1010000;
+
+			getRange(start);
+		</script>
+	</body>
+</html>
