@@ -31,53 +31,58 @@
 					method: "get",
 					success: function(res) {
 						if ($(res).find('#' + errMsg).get().length === 0) {
-							var names = $(res).find('#' + indemnitorId + ' input').get();
-							var jobs = $(res).find('.' + jobClass).get();
-
-							var single = license + ',';
-							keys.forEach(function(k){
-								var name = inputNames[k];
-								var val = $($(res).find(".table_webUserControl [name=" + name + "]").get()[0]).val();
-								if (k === 'entity') {
-									single += $($(res).find(".table_webUserControl [name=" + name + "]" + " option[value=" + val + "]").get()[0]).html() + ',';
-								} else {
-									single += val + ',';
-								}
-							});
-
-							var classfications = $(res).find('#' + table + ' div span').get();
-							single += '"';
-							for (var j = 0; j < classfications.length; j = j + 2) {
-								if (j == classfications.length - 2)
-									single += $(classfications[j]).html() + ' ' + $(classfications[j + 1]).html();
-								else
-									single += $(classfications[j]).html() + ' ' + $(classfications[j + 1]).html() + '\n';
-							}
-							single += '",';
-
-							if (names.length < 2) {
-								powerList += single + ',,,,,,,\n';
+							if ($($(res).find(".table_webUserControl [name=" + inputNames.businessName + "]").get()[0]).val() == 'undefined')
+							{
+								errors.push(license);
 							} else {
-								for (var i = 0; i < names.length - 1; i++) {
-									var _single = single;
+								var names = $(res).find('#' + indemnitorId + ' input').get();
+								var jobs = $(res).find('.' + jobClass).get();
 
-									var name = $(names[i]).val();
-									var _names = name.split(':');
-									for (var j = 0; j < 3; j++) {
-										if (_names[j]) {
-											_single += _names[j] + ',';
-										} else {
-											_single += ',';
-										}
+								var single = license + ',';
+								keys.forEach(function(k){
+									var name = inputNames[k];
+									var val = $($(res).find(".table_webUserControl [name=" + name + "]").get()[0]).val();
+									if (k === 'entity') {
+										single += $($(res).find(".table_webUserControl [name=" + name + "]" + " option[value=" + val + "]").get()[0]).html() + ',';
+									} else {
+										single += val + ',';
 									}
+								});
 
-									var job = $(jobs[i]).html();
-									job = job.replace("(", "");
-									job = job.replace(")", "");
-									_single += job;
+								var classfications = $(res).find('#' + table + ' div span').get();
+								single += '"';
+								for (var j = 0; j < classfications.length; j = j + 2) {
+									if (j == classfications.length - 2)
+										single += $(classfications[j]).html() + ' ' + $(classfications[j + 1]).html();
+									else
+										single += $(classfications[j]).html() + ' ' + $(classfications[j + 1]).html() + '\n';
+								}
+								single += '",';
 
-									_single += ',,,,,\n';
-									powerList += _single;
+								if (names.length < 2) {
+									powerList += single + ',,,,,,,\n';
+								} else {
+									for (var i = 0; i < names.length - 1; i++) {
+										var _single = single;
+
+										var name = $(names[i]).val();
+										var _names = name.split(':');
+										for (var j = 0; j < 3; j++) {
+											if (_names[j]) {
+												_single += _names[j] + ',';
+											} else {
+												_single += ',';
+											}
+										}
+
+										var job = $(jobs[i]).html();
+										job = job.replace("(", "");
+										job = job.replace(")", "");
+										_single += job;
+
+										_single += ',,,,,\n';
+										powerList += _single;
+									}
 								}
 							}
 						}
@@ -117,21 +122,25 @@
 			}
 
 			function getRange(s) {
-				if (s + 1000 >= end) {
-					count = end - s + 1;
-					for (var i = s; i <= end; i++) {
-						getSingle(i, s + 1000, 'none');
+				setTimeout(function() {
+					console.log('getRange');
+					if (s + step >= end) {
+						count = end - s + 1;
+						for (var i = s; i <= end; i++) {
+							getSingle(i, s + step, 'none');
+						}
+					} else {
+						count = step;
+						for (var i = s; i < (s + step); i++) {
+							getSingle(i, s + step, getRange);
+						}
 					}
-				} else {
-					count = 1000;
-					for (var i = s; i < (s + 1000); i++) {
-						getSingle(i, s + 1000, getRange);
-					}
-				}
+				}, 2000);
 			}
 
-			var start = 1000000;
-			var end = 1010000;
+			var start = 900000;
+			var end = 900100;
+			var step = 5;
 
 			getRange(start);
 		</script>
